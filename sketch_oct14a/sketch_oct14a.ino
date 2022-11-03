@@ -22,8 +22,10 @@ AccelStepper stepper; // Defaults to AccelStepper::FULL4WIRE (4 pins) on 2, 3, 4
  
 void setup()
 {  
+  
    Mtrspeed = 10;
    Serial.begin(9600);
+   Serial.println("Hello from arduino");
    stepper.setMaxSpeed(1000);
    stepper.setSpeed(Mtrspeed); 
 
@@ -55,6 +57,7 @@ readstring();
    }
   
    stepper.runSpeed();
+//Serial.println("Hello from arduino");
 }
 
 

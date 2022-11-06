@@ -4,13 +4,15 @@ byte I2C_OnOff;
 void setup() 
 {
   pinMode(DO_Blink, OUTPUT);                    
-  Wire.begin(1);                                
+  Wire.begin(3);                                
   Wire.onReceive(BlinkLED);                     
 }
 void loop() 
 {
 delay(100);
 }
+
+
 void BlinkLED(int Press)
 {
   I2C_OnOff = Wire.read();                      

@@ -19,6 +19,7 @@ void setup()
 }
 void loop()
 {
+  int addr = 1;
   //while (Serial.available())
   //{
     delay(20);
@@ -42,6 +43,23 @@ void loop()
       String speed1 = inputString.substring(2,5);
       speedVal = speed1.toInt();
       //Serial.println("Changing speed for track a to " + speed1);
+    }else if (inputString.substring(0,2) == "zo")
+    {
+      addr = 3;
+      I2C_OnOff = 1;
+    }else if (inputString.substring(0,2) == "zf")
+    {
+      addr = 3;
+      I2C_OnOff = 0;
+    }
+    else if (inputString.substring(0,2) == "xo")
+    {
+      addr = 2;
+      I2C_OnOff = 1;
+    }else if (inputString.substring(0,2) == "xf")
+    {
+      addr = 2;
+      I2C_OnOff = 0;
     }
     //Serial.println(inputString.length());                                            
     inputString = "";                                                        
@@ -56,7 +74,7 @@ void loop()
   {
     cnt = 0;
   }
-  Wire.beginTransmission(1);                                                
+  Wire.beginTransmission(addr);                                                
   Wire.write(I2C_OnOff);                                                    
   Wire.endTransmission();                                                   
 }

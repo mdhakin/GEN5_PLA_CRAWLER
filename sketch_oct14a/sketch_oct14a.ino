@@ -10,23 +10,26 @@
 #include <AccelStepper.h>
 #include <Wire.h> 
 void BlinkLED(int Press);
+void setDirection();
 int speed;int DO_Blink = 13;
 byte I2C_OnOff;  
 void serial_flush(void);
 void readstring();
-
+int directionVar = 0; // 0 forward  1 rev
 String inputString = "";
 bool stringComplete = false; 
 int Mtrspeed;
 AccelStepper stepper; // Defaults to AccelStepper::FULL4WIRE (4 pins) on 2, 3, 4, 5
- 
+
+int printLocationCnt = 0;
 void setup()
 {  
-  
-   Mtrspeed = 10;
+ 
+   Mtrspeed = 100;
    Serial.begin(9600);
    Serial.println("Hello from arduino");
    stepper.setMaxSpeed(1000);
+   stepper.setAcceleration(1000.0);
    stepper.setSpeed(Mtrspeed); 
 
    
@@ -34,21 +37,69 @@ void setup()
   Wire.begin(1);                                
   Wire.onReceive(BlinkLED);   
   stepper.setMaxSpeed(750);
-  stepper.setSpeed(600);        
+  
+  stepper.setSpeed(Mtrspeed);  
+
+        
+}
+
+/*
+if(inputString.substring(0,2) == "cd")
+    {
+      stepper.setPinsInverted(true,false,false);
+      stepper.runSpeed();
+    }else
+    {
+
+*/
+
+void setDirection()
+{
+  if(directionVar == 0)
+  {
+    directionVar = 1;
+    stepper.setPinsInverted(true,false,false);
+      stepper.runSpeed();
+  }else
+  {
+    directionVar = 0;
+    stepper.setPinsInverted(false,false,false);
+      stepper.runSpeed();
+  }
 }
  
 void loop()
 {  
+  if(printLocationCnt >= 25000)
+  {
+    Serial.println(stepper.currentPosition());
+    printLocationCnt = 0;
+  }
+  printLocationCnt++;
 readstring();
   if (stringComplete)
   {
     Serial.println("Receved new speed.");
     Serial.println(inputString);
 
-    int newVal = inputString.toInt();
+
+    if(inputString.substring(0,2) == "cd")
+    {
+      setDirection();
+    }else
+    {
+      if (inputString.toInt() > 580 && inputString.toInt() <630)
+      {
+        inputString = "631";
+      }
+      int newVal = inputString.toInt();
     Mtrspeed = newVal;
     stepper.setSpeed(Mtrspeed);
     stepper.runSpeed();
+    }
+      
+    
+    
     
     
      serial_flush(),

@@ -43,6 +43,7 @@ byte I2C_OnOff = 0;
 void HandleReport(String sVal);
 void serial_flush(void);
 void updateLights();
+void PrintInfo();
 void ChangeInitialDirectionForSetUp(int trackid);
 void readstring();
 void SerialHandler(String sVal);  
@@ -81,8 +82,44 @@ void setup()
   delay(2000);
   ChangeInitialDirectionForSetUp((int)TrackB);
   Serial.println("Ready"); 
-  //flashLights();
+  
 }
+
+void PrintInfo()
+{
+  Serial.println("                        GEN 3 DEVELOPMENT PLATFORM");
+  Serial.println("              By Matthew Hakin November 12 2022");
+  Serial.println("========================================================================");
+  Serial.println("                      Language Reference");
+  Serial.println("      A40 Sets Track A to a speed of 400");
+  Serial.println("      X40 Sets all tracks to a speed of 400");
+  Serial.println("      Track A is front left");
+  Serial.println("      Track B is front right");
+  Serial.println("      Track C is rear left");
+  Serial.println("      Track D is rear right");
+  Serial.println("      RSA = Report Velocity on track A");
+  Serial.println("      RPA = Report Direction on track A");
+  Serial.println("      RTA = Report ticks for Ttack A");
+  Serial.println("      +A increases Track a Speed by 10");
+  Serial.println("      +X increases all Tracks Speeds by 10");
+  Serial.println("      -A decreases Track a Speed by 10");
+  Serial.println("      -X decreases all Tracks Speeds by 10");
+  Serial.println("      AO will change directions on track A");
+  Serial.println("      XO will change direcions on all tracks");
+  Serial.println("      FL - Flash Lights");
+  Serial.println("      S will stop all motion");
+  Serial.println("                 ||   -   ||");
+  Serial.println("                 || /   \ ||");
+  Serial.println("                 || |   | ||");
+  Serial.println("                    |   |");
+  Serial.println("                    -----");
+  Serial.println("                    |   |");
+  Serial.println("                 || |   | ||");
+  Serial.println("                 || \   / ||");
+  Serial.println("                 ||   -   ||");
+  Serial.println("");
+}
+
 
 void flashLights()
 {
@@ -128,7 +165,7 @@ void loop()
 {
     readstring();
     inputString.toUpperCase();
-    
+    // PrintInfo()
     if (stringComplete)
     {
       if(inputString[0] == 'L')
@@ -140,6 +177,10 @@ void loop()
       }else if(inputString[0] == 'F' && inputString[1] == 'L')
       {
         flashLights();
+        inputString = "";
+      }else if(inputString[0] == 'I' && inputString[1] == 'N')
+      {
+        PrintInfo();
         inputString = "";
       }else if(inputString[0] == 'S')
       {
@@ -162,6 +203,18 @@ void loop()
       
       serial_flush();
     }     
+    if(Wire.available()) 
+    {        
+      byte a = Wire.read();
+      byte b = Wire.read();
+      
+      int bigNum;
+      bigNum = a;
+      bigNum = (bigNum << 8) | b;
+      Serial.println(bigNum);
+      
+      Serial.println("======");
+    }
                                                    
 }
 
@@ -388,6 +441,10 @@ void readstring()
 
 }
 
+void requestPosition()
+{
+   Wire.requestFrom(3, 2);    // request potentiometer position from slave 0x08
+}
 
 // Format R*A
 void HandleReport(String sVal)
@@ -398,7 +455,8 @@ void HandleReport(String sVal)
 
   RPA = Report Direction on track A
   RPB = Report Direction on track B
-  
+
+  RTA = Report position
   */
 
   if(sVal[2] == 'A')
@@ -411,6 +469,9 @@ void HandleReport(String sVal)
     {
       Serial.print("Track A Direction: ");
       Serial.println(ADir);
+    }else if(sVal[1] == 'T')
+    {
+      Wire.requestFrom(TrackA,2);
     }
   }else if(sVal[2] == 'B')
   {
@@ -422,6 +483,9 @@ void HandleReport(String sVal)
     {
       Serial.print("Track B Direction: ");
       Serial.println(BDir);
+    }else if(sVal[1] == 'T')
+    {
+      Wire.requestFrom(TrackB,2);
     }
   }else if(sVal[2] == 'C')
   {
@@ -433,6 +497,9 @@ void HandleReport(String sVal)
     {
       Serial.print("Track C Direction: ");
       Serial.println(CDir);
+    }else if(sVal[1] == 'T')
+    {
+      Wire.requestFrom(TrackC,2);
     }
   }else if(sVal[2] == 'D')
   {
@@ -444,6 +511,9 @@ void HandleReport(String sVal)
     {
       Serial.print("Track D Direction: ");
       Serial.println(DDir);
+    }else if(sVal[1] == 'T')
+    {
+      Wire.requestFrom(TrackD,2);
     }
   }
   inputString = "";
@@ -683,9 +753,8 @@ void updateLights()
   }
   digitalWrite(BLUE_LIGHT, HIGH);
 }
-/*
+
 void WireAction()
 {
   return;
 }
-*/

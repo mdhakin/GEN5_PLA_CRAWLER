@@ -8,41 +8,43 @@ int directionVar = 0; // 0 forward  1 rev
 AccelStepper stepper;
 
 void WireAction();
+void SendData();
 byte I2C_Command;
 
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   //Serial.begin(9600);
- //MTRspeed = 10;
+ MTRspeed = 0;
  stepper.setMaxSpeed(800);
  stepper.setSpeed(MTRspeed);
 
- Wire.begin(3);
+ Wire.begin(4);
  Wire.onReceive(WireAction);
- 
+ Wire.onRequest(SendData);
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  //delay(300);
-/*
-if(MTRspeed > 50)
-{
-  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);                       // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000);
-}else
-{
-  digitalWrite(LED_BUILTIN, LOW);
-}
-  */
+  
+
   stepper.setSpeed(MTRspeed);
   stepper.runSpeed();
 }
+void SendData()
+{
+  long tt = stepper.currentPosition(); 
+  
+   
+    int rrr = (int)tt;
+    byte myArray[2];
+    myArray[0] = (rrr >> 8) & 0xFF;
+    myArray[1] = rrr & 0xFF;
+    
+    Wire.write(myArray, 2);
 
+}
 void WireAction()
 {
   I2C_Command = Wire.read();
@@ -50,7 +52,7 @@ void WireAction()
    if(tempSpeed < 81)
    {
     MTRspeed = (int)I2C_Command * 10 * backwards;
-    //Serial.println(MTRspeed);
+    
    }else if(tempSpeed == 200)
    {
     setDirection();

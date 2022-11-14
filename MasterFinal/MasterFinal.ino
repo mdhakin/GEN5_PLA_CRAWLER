@@ -1,29 +1,6 @@
 
 /*
- * 
- * Language Reference
-A40 Sets Track A to 400
-X40 Sets all tracks to 40
-AO Reverses track A
-XO Reverses all tracks
 
-L does setup
-
-RSA = Report Velocity on track A
-
-RPA = Report Direction on track A
-
-RTA = Report ticks for Ttack A
-
-+A increases Track a Speed by 10
-+X increases all Tracks Speeds by 10
-
--A decreases Track a Speed by 10
--X decreases all Tracks Speeds by 10
-
-FL - Flash Lights
-
-S Stops all Tracks
 */
 #include <Wire.h>        
                                                 
@@ -90,7 +67,10 @@ void PrintInfo()
   Serial.println("                        GEN 3 DEVELOPMENT PLATFORM");
   Serial.println("              By Matthew Hakin November 12 2022");
   Serial.println("========================================================================");
-  /*Serial.println("                      Language Reference");
+  /*
+  Serial.println("                      Language Reference");
+  Serial.println("      There are 4 Tracks A, B, C, D");
+  Serial.println("      X is used to address all the Tracks at once");
   Serial.println("      A40 Sets Track A to a speed of 400");
   Serial.println("      X40 Sets all tracks to a speed of 400");
   Serial.println("      Track A is front left");

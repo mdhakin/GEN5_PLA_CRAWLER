@@ -90,7 +90,7 @@ void PrintInfo()
   Serial.println("                        GEN 3 DEVELOPMENT PLATFORM");
   Serial.println("              By Matthew Hakin November 12 2022");
   Serial.println("========================================================================");
-  Serial.println("                      Language Reference");
+  /*Serial.println("                      Language Reference");
   Serial.println("      A40 Sets Track A to a speed of 400");
   Serial.println("      X40 Sets all tracks to a speed of 400");
   Serial.println("      Track A is front left");
@@ -117,45 +117,24 @@ void PrintInfo()
   Serial.println("                 || |   | ||");
   Serial.println("                 || \   / ||");
   Serial.println("                 ||   -   ||");
-  Serial.println("");
+  Serial.println("");*/
 }
 
 
 void flashLights()
 {
   int cDelay = 500;
-  digitalWrite(BLUE_LIGHT, LOW);
+
+  for(int i = 0;i<10;i++)
+  {
+    digitalWrite(BLUE_LIGHT, LOW);
   digitalWrite(YELLOW_LIGHT, LOW);
   delay(cDelay);
   digitalWrite(BLUE_LIGHT, HIGH);
   digitalWrite(YELLOW_LIGHT, HIGH);
   delay(cDelay);
-  digitalWrite(BLUE_LIGHT, LOW);
-  digitalWrite(YELLOW_LIGHT, LOW);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, HIGH);
-  digitalWrite(YELLOW_LIGHT, HIGH);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, LOW);
-  digitalWrite(YELLOW_LIGHT, LOW);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, HIGH);
-  digitalWrite(YELLOW_LIGHT, HIGH);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, LOW);
-  digitalWrite(YELLOW_LIGHT, LOW);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, HIGH);
-  digitalWrite(YELLOW_LIGHT, HIGH);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, LOW);
-  digitalWrite(YELLOW_LIGHT, LOW);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, HIGH);
-  digitalWrite(YELLOW_LIGHT, HIGH);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, LOW);
-  digitalWrite(YELLOW_LIGHT, LOW);
+  }
+  
   
   
 updateLights();

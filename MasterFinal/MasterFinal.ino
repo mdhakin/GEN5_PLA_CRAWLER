@@ -1,7 +1,3 @@
-
-/*
-
-*/
 #include <Wire.h>        
                                                 
 String readString;                                                          
@@ -16,6 +12,8 @@ byte I2C_OnOff = 0;
 #define TrackD 3
 
 #define MAX_SPEED 80
+
+#define ENCODER_CONTROLLER 11
 
 void HandleReport(String sVal);
 void serial_flush(void);
@@ -42,7 +40,14 @@ int BDir = 0;
 int CDir = 0;
 int DDir = 0;
 
+int encoder1Angle = 0;    // Not implemented
+int encoder2Angle = 0;    // Not implemented
+int vehicleAngle = 0;     // Not implemented
+
+// holds serial port incoming messages
 String inputString = "";
+
+// Message from the serial port is ready
 bool stringComplete = false; 
                                                            
 void setup()
@@ -56,18 +61,18 @@ void setup()
   digitalWrite(YELLOW_LIGHT, LOW);
   updateLights();
 
-  delay(2000);
-  ChangeInitialDirectionForSetUp((int)TrackB);
+  //delay(2000);
+  //ChangeInitialDirectionForSetUp((int)TrackB);
   Serial.println("Ready"); 
   
 }
 
 void PrintInfo()
 {
+  /*
   Serial.println("                        GEN 3 DEVELOPMENT PLATFORM");
   Serial.println("              By Matthew Hakin November 12 2022");
   Serial.println("========================================================================");
-  /*
   Serial.println("                      Language Reference");
   Serial.println("      There are 4 Tracks A, B, C, D");
   Serial.println("      X is used to address all the Tracks at once");
@@ -88,16 +93,20 @@ void PrintInfo()
   Serial.println("      XO will change direcions on all tracks");
   Serial.println("      FL - Flash Lights");
   Serial.println("      S will stop all motion");
-  Serial.println("                 ||   -   ||");
-  Serial.println("                 || /   \ ||");
-  Serial.println("                 || |   | ||");
-  Serial.println("                    |   |");
-  Serial.println("                    -----");
-  Serial.println("                    |   |");
-  Serial.println("                 || |   | ||");
-  Serial.println("                 || \   / ||");
-  Serial.println("                 ||   -   ||");
-  Serial.println("");*/
+  Serial.println("      E1 will return Encoder1s value");           // Not implemented
+  Serial.println("      E2 will return Encoder1s value");           // Not implemented
+  Serial.println("      E3 will return the angle of the crawler");  // Not implemented
+  Serial.println("***************************************************");
+  Serial.println("                 ||    -    ||                     ");
+  Serial.println("                 ||- /   \- ||                     ");
+  Serial.println("                 ||  |   |  ||                     ");
+  Serial.println("                     |   |                         ");
+  Serial.println("                     -----                         ");
+  Serial.println("                     |   |                         ");
+  Serial.println("                 ||  |   |  ||                     ");
+  Serial.println("                 ||- \   /- ||                     ");
+  Serial.println("                 ||    -    ||                     ");
+  Serial.println("***************************************************");*/
 }
 
 
@@ -108,11 +117,11 @@ void flashLights()
   for(int i = 0;i<10;i++)
   {
     digitalWrite(BLUE_LIGHT, LOW);
-  digitalWrite(YELLOW_LIGHT, LOW);
-  delay(cDelay);
-  digitalWrite(BLUE_LIGHT, HIGH);
-  digitalWrite(YELLOW_LIGHT, HIGH);
-  delay(cDelay);
+    digitalWrite(YELLOW_LIGHT, LOW);
+    delay(cDelay);
+    digitalWrite(BLUE_LIGHT, HIGH);
+    digitalWrite(YELLOW_LIGHT, HIGH);
+    delay(cDelay);
   }
   
   
@@ -279,10 +288,8 @@ void adjustSpeed(String sVal)
             Wire.beginTransmission(TrackA);                                                
             Wire.write(ASpeed);                                              
             Wire.endTransmission();
-            
         }
     }
-
     if(sVal[1] == 'B')
     {
         if(BSpeed > adjustVal)
@@ -292,7 +299,6 @@ void adjustSpeed(String sVal)
             Wire.beginTransmission(TrackB);                                                
             Wire.write(BSpeed);                                              
             Wire.endTransmission();
-            
         }
     }
 
@@ -363,12 +369,6 @@ void adjustSpeed(String sVal)
   }
 }
 
-
-
-
-
-
-
 void ChangeInitialDirectionForSetUp(int trackid)
 {
   int DirectionChangeCommand = 200;
@@ -408,15 +408,6 @@ void requestPosition()
 // Format R*A
 void HandleReport(String sVal)
 {
-  /*
-  RSA = Report Velocity on track A
-  RSB = Report Velocity on track B
-
-  RPA = Report Direction on track A
-  RPB = Report Direction on track B
-
-  RTA = Report position
-  */
 
   if(sVal[2] == 'A')
   {

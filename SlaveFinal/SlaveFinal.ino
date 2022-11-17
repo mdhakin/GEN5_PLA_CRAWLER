@@ -15,8 +15,8 @@ byte I2C_Command;
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   //Serial.begin(9600);
- MTRspeed = 0;
- stepper.setMaxSpeed(800);
+ //MTRspeed = 0;
+ stepper.setMaxSpeed(3800);
  stepper.setSpeed(MTRspeed);
 
  Wire.begin(4);
@@ -49,11 +49,11 @@ void WireAction()
 {
   I2C_Command = Wire.read();
   int tempSpeed = (int)I2C_Command;
-   if(tempSpeed < 81)
+   if(tempSpeed < 251)
    {
     MTRspeed = (int)I2C_Command * 10 * backwards;
     
-   }else if(tempSpeed == 200)
+   }else if(tempSpeed == 254)
    {
     setDirection();
     

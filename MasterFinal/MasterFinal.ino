@@ -11,7 +11,7 @@ byte I2C_OnOff = 0;
 #define TrackC 5
 #define TrackD 3
 
-#define MAX_SPEED 80
+#define MAX_SPEED 255
 
 #define ENCODER_CONTROLLER 11
 
@@ -371,7 +371,7 @@ void adjustSpeed(String sVal)
 
 void ChangeInitialDirectionForSetUp(int trackid)
 {
-  int DirectionChangeCommand = 200;
+  int DirectionChangeCommand = 254;
   
   Wire.beginTransmission(trackid);                                                
   Wire.write(DirectionChangeCommand);                                              
@@ -572,7 +572,7 @@ void SerialHandler(String sVal)
     if(sVal[0] == 'A')
     {
       
-        int DirectionChangeCommand = 200;
+        int DirectionChangeCommand = 254;
         if(ADir == 0)
         {
           ADir = 1;
@@ -586,7 +586,7 @@ void SerialHandler(String sVal)
         Wire.endTransmission();
     }else if(sVal[0] == 'B')
     {
-      int DirectionChangeCommand = 200;
+      int DirectionChangeCommand = 254;
         if(BDir == 0)
         {
           BDir = 1;
@@ -600,7 +600,7 @@ void SerialHandler(String sVal)
         Wire.endTransmission();
     }else if(sVal[0] == 'C')
     {
-      int DirectionChangeCommand = 200;
+      int DirectionChangeCommand = 254;
         if(CDir == 0)
         {
           CDir = 1;
@@ -614,7 +614,7 @@ void SerialHandler(String sVal)
         Wire.endTransmission();
     }else if(sVal[0] == 'D')
     {
-      int DirectionChangeCommand = 200;
+      int DirectionChangeCommand = 254;
         if(DDir == 0)
         {
           DDir = 1;
@@ -628,7 +628,7 @@ void SerialHandler(String sVal)
         Wire.endTransmission();
     }else if(sVal[0] == 'X')
     {
-      int DirectionChangeCommand = 200;
+      int DirectionChangeCommand = 254;
       if(ADir == 0)
         {
           ADir = 1;

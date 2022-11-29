@@ -22,17 +22,16 @@ AccelStepper stepper; // Defaults to AccelStepper::FULL4WIRE (4 pins) on 2, 3, 4
  
 void setup()
 {  
-   Mtrspeed = 10;
+   Mtrspeed = 300;
    Serial.begin(9600);
-   stepper.setMaxSpeed(1000);
+   stepper.setMaxSpeed(9000);
    stepper.setSpeed(Mtrspeed); 
 
    
   pinMode(DO_Blink, OUTPUT);                    
   Wire.begin(1);                                
   Wire.onReceive(BlinkLED);   
-  stepper.setMaxSpeed(750);
-  stepper.setSpeed(600);        
+        
 }
  
 void loop()

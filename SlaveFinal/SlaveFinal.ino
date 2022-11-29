@@ -1,7 +1,7 @@
 #include <AccelStepper.h>
 #include <Wire.h>
 void setDirection();
-int MTRspeed = 0;
+int MTRspeed = 300;
 
 int backwards = 1;
 int directionVar = 0; // 0 forward  1 rev

@@ -48,6 +48,8 @@ int BDir = 0;
 int CDir = 0;
 int DDir = 0;
 
+
+
 // Variables to hold encoder angles and tilt sensor value
 int encoder1Angle = 0;    // Not implemented
 int encoder2Angle = 0;    // Not implemented
@@ -96,15 +98,26 @@ int getIDFromChar(char letter);
 // requests position from motor controller
 int requestPosition(int motorID);
 
+// Move the Wire handling routines out of main loop
+void I2C_Message_Handler(byte aa, byte bb, byte cc, byte dd, byte ee, byte ff, byte gg, byte hh );
+
 void setup()
 {
   pinMode(BLUE_LIGHT, OUTPUT);
   pinMode(YELLOW_LIGHT, OUTPUT);
-  Wire.begin();                                                             
+  Wire.begin();  
+                                                          
   Serial.begin(9600);
     
   digitalWrite(BLUE_LIGHT, HIGH);
   digitalWrite(YELLOW_LIGHT, LOW);
+  
+  Serial.println("Ready"); 
+}
+
+void printLogo()
+{
+  Serial.println("***************** Mistras Robotics ****************");
   Serial.println("***************************************************");
   Serial.println("                 ||    -    ||                     ");
   Serial.println("                 ||- /   \\- ||                     ");
@@ -116,36 +129,113 @@ void setup()
   Serial.println("                 ||- \\   /- ||                     ");
   Serial.println("                 ||    -    ||                     ");
   Serial.println("***************************************************");
-  Serial.println("Ready"); 
+  Serial.println("************** By Matthew Hakin *******************");
+  Serial.println("");
+  Serial.println("");
+  Serial.println("");
+  Serial.print("Ready>> ");
 }
+
+
 
 void loop()
 {
+  
+  
+  
     readstring();
     inputString.toUpperCase();
-    // PrintInfo()
+
+    if(stringComplete && inputString.substring(0,4) == "LOGO")
+      {
+        printLogo();
+        inputString = "";
+        stringComplete = false;
+      }
+    
     if (stringComplete)
     {
-        processCommand(inputString);
+      
+      //Serial.println("Processing inputString");
+        if(inputString[0] != 'R' && inputString.length() == 9 && inputString[1] != 'O')
+        {
+          processCommand(inputString);
+          inputString = "";
+          stringComplete = false;
+         // Wire.requestFrom(3, 8);
+        }else if (inputString[0] != 'R' && inputString.length() != 9 && inputString[1] != 'O')
+        {
+          Serial.print("Input Length ");
+          Serial.println(inputString.length());
+          inputString = "";
+          stringComplete = false;
+          Serial.println("Input not formatted correctly");
+          return;
+        }else if(inputString[0] == 'R' && inputString[1] != 'O')
+        {
+          processCommand(inputString);
+          inputString = "";
+          stringComplete = false;
+        }else if(inputString[1] == 'O')
+        {
+          processCommand(inputString);
+          inputString = "";
+          stringComplete = false;
+        }
+        
     }
-
+    
+    
     if(Wire.available()) 
-    {        
-      byte a = Wire.read();
-      byte b = Wire.read();
-      byte c = Wire.read();
-      byte d = Wire.read();
-      byte e = Wire.read();
-      byte f = Wire.read();
-      byte g = Wire.read();
-      byte h = Wire.read();
+    { 
+      byte rec[10];
+      int i = 0;
+      while(0 < Wire.available())
+      {
+        rec[i] = Wire.read();
+        i++;     
+      }
+      byte a = rec[0];
+      byte b = rec[1];
+      byte c = rec[2];
+      byte d = rec[3];
+      byte e = rec[4];
+      byte f = rec[5];
+      byte g = rec[6];
+      byte h = rec[7];
+      
+      I2C_Message_Handler(a,b,c,d,e,f,g,h);
+      return;
+    }
+}
 
-      int bigNum;
-      bigNum = a;
-      bigNum = (bigNum << 8) | b;
-      int mtrDir = (int)c;
-      int messageRecFrom = (int)d;
 
+void I2C_Message_Handler(byte aa, byte bb, byte cc, byte dd, byte ee, byte ff, byte gg, byte hh )
+{
+  int bigNum;
+      bigNum = aa;
+      bigNum = (bigNum << 8) | bb;
+      int mtrDir = (int)cc;
+      int messageRecFrom = (int)dd;
+
+      String TrackDescription = "";
+
+      if (messageRecFrom == 3)
+      {
+        TrackDescription = "Left Front(A)";
+      }else if (messageRecFrom == 4)
+      {
+        TrackDescription = "Right Front(B)";
+      }else if (messageRecFrom == 5)
+      {
+        TrackDescription = "Left Rear(C)";
+      }else if (messageRecFrom == 4)
+      {
+        TrackDescription = "Right Rear(D)";
+      }
+      
+      Serial.print("Response received from ");
+        Serial.println(TrackDescription);
       if(messageRecFrom == 3)
       {
         ASpeed = bigNum;
@@ -163,34 +253,90 @@ void loop()
         DSpeed = bigNum;
         DDir = mtrDir;
       }
+
       
+      Serial.println("");
+      Serial.println("");
+      Serial.println("Report:");
       Serial.print("Motor ");
-      Serial.print(messageRecFrom);
+      Serial.print(TrackDescription);
       Serial.print(" position = ");
       Serial.println(bigNum);
-      Serial.print(messageRecFrom);
-      Serial.print(" Direction = ");
-      Serial.println(mtrDir);
-      Serial.println("======");
-    }
+      
+      Serial.print("Direction = ");
+      if(mtrDir == 0)
+      {
+        Serial.println("Forward");
+      }else
+      {
+        Serial.println("Reverse");
+      }
+      
+      Serial.print("spd:");
+      Serial.print((char)ee);
+      Serial.print((char)ff);
+      Serial.println("00");
+      Serial.println("==================");
+      Serial.println("");
+      Serial.println("");
+      Serial.println("");
+      return;
 }
 
 // newSpeed must be formatted as 8 character string example AV-00000
 void changeSpeed(String newSpeed, int track)
 {
-    Serial.println(newSpeed);
+    //Serial.println(newSpeed);
     char msg[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
     msg[0] = newSpeed[0];
-    msg[0] = newSpeed[1];
-    msg[0] = newSpeed[2];
-    msg[0] = newSpeed[3];
-    msg[0] = newSpeed[4];
-    msg[0] = newSpeed[5];
-    msg[0] = newSpeed[6];
-    msg[0] = newSpeed[7];
+    msg[1] = newSpeed[1];
+    msg[2] = newSpeed[2];
+    msg[3] = newSpeed[3];
+    msg[4] = newSpeed[4];
+    msg[5] = newSpeed[5];
+    msg[6] = newSpeed[6];
+    msg[7] = newSpeed[7];
+
+    char velocity[5] = { ' ', ' ', ' ', ' ', ' ' };
+    velocity[0] = msg[3];
+    velocity[1] = msg[4];
+    velocity[2] = msg[5];
+    velocity[3] = msg[6];
+    velocity[4] = msg[7];
+    
+    String spd = velocity;
+    int iSpeed = spd.toInt();
+    
+    if(newSpeed[1] == 'V' && track == 3)
+    {
+      Serial.print("Track A speed = ");
+      ASpeed = iSpeed;
+      Serial.println(ASpeed);
+    }else if(newSpeed[1] == 'V' && track == 4)
+    {
+      Serial.print("Track B speed = ");
+      BSpeed = iSpeed;
+      Serial.println(BSpeed);
+    }else if(newSpeed[1] == 'V' && track == 5)
+    {
+      Serial.print("Track C speed = ");
+      CSpeed = iSpeed;
+      Serial.println(CSpeed);
+    }else if(newSpeed[1] == 'V' && track == 6)
+    {
+      Serial.print("Track D speed = ");
+      DSpeed = iSpeed;
+      Serial.println(DSpeed);
+    }
+    
+    
+    
+    Serial.print("Sending ");
+    Serial.print(newSpeed.substring(0,3));
+    Serial.println(iSpeed);
     Wire.beginTransmission(track);  // in define like TrackA                                              
     Wire.write(msg);                                              
-    Wire.endTransmission();
+    Wire.endTransmission(true);
 }
 
 void serial_flush(void) {
@@ -223,9 +369,20 @@ void processCommand(String command)
     command[0] == 'D')              // If it is a speed command to a specific track
     {
         int trackId = getIDFromChar(command[0]);
-        if(trackId != 0 && command[1] == 'V')
+        if(trackId != 0 && (command[1] == 'V' || command[1] == 'O'))
         {
+          if(command[1] == 'O')
+          {
+            char com2[9] = { command[0], 'O', '-', '0', '0', '0', '0', '0', '\n' };
+            String sCom2 = com2;
+            changeSpeed(sCom2, trackId);
+            
+          }else if(command[1] == 'V')
+          {
             changeSpeed(command, trackId);
+          }
+           
+           
         }
         return;
     }else if(command[0] == 'X')     // If it is supposed to go out to all tracks
@@ -243,6 +400,9 @@ void processCommand(String command)
 
     if(command[0] == 'R')
     {
+      int trackId = getIDFromChar(command[1]);
+      
+        requestPosition(trackId);
         return;
     }
     return;

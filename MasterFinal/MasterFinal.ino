@@ -6,10 +6,10 @@ byte I2C_OnOff = 0;
 #define BLUE_LIGHT 2
 #define YELLOW_LIGHT 3
 
-#define TrackA 4
-#define TrackB 6
+#define TrackA 3
+#define TrackB 4
 #define TrackC 5
-#define TrackD 3
+#define TrackD 6
 
 #define MAX_SPEED 255
 
@@ -61,8 +61,6 @@ void setup()
   digitalWrite(YELLOW_LIGHT, LOW);
   updateLights();
 
-  //delay(2000);
-  //ChangeInitialDirectionForSetUp((int)TrackB);
   Serial.println("Ready"); 
   
 }
@@ -138,9 +136,9 @@ void loop()
     {
       if(inputString[0] == 'L')
       {
-        ChangeInitialDirectionForSetUp((int)TrackB);
-        flashLights();
-        inputString = "";
+        //ChangeInitialDirectionForSetUp((int)TrackB);
+        //flashLights();
+        //inputString = "";
         return;
       }else if(inputString[0] == 'F' && inputString[1] == 'L')
       {
@@ -175,10 +173,17 @@ void loop()
     {        
       byte a = Wire.read();
       byte b = Wire.read();
-      
+      byte c = Wire.read();
+      byte d = Wire.read();
+      byte e = Wire.read();
+      byte f = Wire.read();
+      byte g = Wire.read();
+      byte h = Wire.read();
+
       int bigNum;
       bigNum = a;
       bigNum = (bigNum << 8) | b;
+      
       Serial.println(bigNum);
       
       Serial.println("======");
@@ -474,7 +479,7 @@ void SerialHandler(String sVal)
 {
        currentMsgSize = sVal.length();
        
-        Wire.beginTransmission(11); 
+        //Wire.beginTransmission(11); 
         inputString = "";
         stringComplete = false;
         

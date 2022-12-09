@@ -1,5 +1,7 @@
 #include <AccelStepper.h>
 #include <Wire.h>
+
+
 void setDirection();
 int MTRspeed = 300;
 
@@ -11,15 +13,17 @@ void WireAction();
 void SendData();
 byte I2C_Command;
 
+// if == 0 then the setting is for the A4988 controllers
+// if == 1 then the setting is for the TMC controllers 
+int motorcontroller_mode = 0;
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-  //Serial.begin(9600);
- //MTRspeed = 0;
- stepper.setMaxSpeed(3800);
+  
+ stepper.setMaxSpeed(10000);
  stepper.setSpeed(MTRspeed);
 
- Wire.begin(5);
+ Wire.begin(6);
  Wire.onReceive(WireAction);
  Wire.onRequest(SendData);
 
@@ -51,11 +55,26 @@ void WireAction()
   int tempSpeed = (int)I2C_Command;
    if(tempSpeed < 251)
    {
-    MTRspeed = (int)I2C_Command * 10 * backwards;
+    if(motorcontroller_mode == 1)
+    {
+      MTRspeed = ((int)I2C_Command * 10 * backwards) * 2;
+    }else
+    {
+      MTRspeed = ((int)I2C_Command * 10 * backwards);
+    }
+    
     
    }else if(tempSpeed == 254)
    {
     setDirection();
+    
+   }else if(tempSpeed == 253)
+   {
+    motorcontroller_mode = 1;
+    
+   }else if(tempSpeed == 252)
+   {
+    motorcontroller_mode = 0;
     
    }
 }

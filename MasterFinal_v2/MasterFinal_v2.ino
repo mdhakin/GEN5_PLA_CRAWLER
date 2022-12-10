@@ -23,6 +23,10 @@ RAV00000 will request track A's velocity
 RAA00000 will request track A'S acceleration
 RAD00000 wil request track A's direction
 RAP00000 will request track A's position
+
+RT - tiltsensor
+RE1 Encoder 1
+RE2 Encoder 2
 */
 
 #include <Wire.h>        
@@ -47,6 +51,11 @@ int ADir = 0;
 int BDir = 0;
 int CDir = 0;
 int DDir = 0;
+
+unsigned long startMillis;  //some global variables available anywhere in the program
+unsigned long currentMillis;
+const unsigned long period = 1000;  //the value is a number of milliseconds
+unsigned long ticks = 0;
 
 
 
@@ -87,6 +96,7 @@ void readstring();
 // Example XV-00000 sets all tracks to 0
 // Example AV-01000 sets track A to 1000
 void changeSpeed(String newSpeed, int track);
+void changeAcceleration(String newAccel, int track);
 
 // This function is the first stop once a command is received and verified
 // this is a function that cleans up the main loop
@@ -100,9 +110,11 @@ int requestPosition(int motorID);
 
 // Move the Wire handling routines out of main loop
 void I2C_Message_Handler(byte aa, byte bb, byte cc, byte dd, byte ee, byte ff, byte gg, byte hh );
+void ENCODER_Message_Handler(byte aa, byte bb, byte cc, byte dd, byte ee, byte ff, byte gg, byte hh );
 
 void setup()
 {
+  startMillis = millis();  //initial start time
   pinMode(BLUE_LIGHT, OUTPUT);
   pinMode(YELLOW_LIGHT, OUTPUT);
   Wire.begin();  
@@ -114,6 +126,7 @@ void setup()
   
   Serial.println("Ready"); 
 }
+
 
 void printLogo()
 {
@@ -137,11 +150,18 @@ void printLogo()
 }
 
 
-
 void loop()
 {
-  
-  
+  currentMillis = millis();
+  if (currentMillis - startMillis >= period)  //test whether the period has elapsed
+  {
+    ticks++;
+    startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED state.
+    //Wire.requestFrom(ENCODER_CONTROLLER, 8);  // request position from slave 0x08
+    int sensorValue = analogRead(A3);
+    tiltSensorValue = sensorValue;
+  }
+
   
     readstring();
     inputString.toUpperCase();
@@ -156,13 +176,38 @@ void loop()
     if (stringComplete)
     {
       
-      //Serial.println("Processing inputString");
+      
         if(inputString[0] != 'R' && inputString.length() == 9 && inputString[1] != 'O')
         {
           processCommand(inputString);
           inputString = "";
           stringComplete = false;
-         // Wire.requestFrom(3, 8);
+         
+        }else if(inputString[0] == 'R' &&  inputString[1] == 'E' &&  inputString[2] == '1')
+        {
+          Serial.print("Encoder 1 value: ");
+          Serial.println(encoder1Angle);
+          inputString = "";
+          stringComplete = false;
+         
+        }else if(inputString[0] == 'R' &&  inputString[1] == 'E' &&  inputString[2] == '2')
+        {
+          Serial.print("Encoder 2 value: ");
+          Serial.println(encoder2Angle);
+          inputString = "";
+          stringComplete = false;
+         
+        }else if(inputString[0] == 'R' &&  inputString[1] == 'T')
+        {
+          Serial.print("Tilt Sensor: ");
+          Serial.println(tiltSensorValue);
+          inputString = "";
+          stringComplete = false;
+         
+        }else if (inputString[0] == 'S' && inputString.length() != 9 && inputString[1] == 'C')
+        {
+          inputString = "";
+          stringComplete = false;
         }else if (inputString[0] != 'R' && inputString.length() != 9 && inputString[1] != 'O')
         {
           Serial.print("Input Length ");
@@ -204,9 +249,31 @@ void loop()
       byte g = rec[6];
       byte h = rec[7];
       
-      I2C_Message_Handler(a,b,c,d,e,f,g,h);
+      if (d == 11)
+      {
+        ENCODER_Message_Handler(a,b,c,d,e,f,g,h);
+      }else{
+        I2C_Message_Handler(a,b,c,d,e,f,g,h);
+      }
+
+      
       return;
     }
+}
+
+void ENCODER_Message_Handler(byte aa, byte bb, byte cc, byte dd, byte ee, byte ff, byte gg, byte hh )
+{
+  int ENCODER1;
+      ENCODER1 = aa;
+      ENCODER1 = (ENCODER1 << 8) | bb;
+
+  int ENCODER2;
+      ENCODER2 = gg;
+      ENCODER2 = (ENCODER2 << 8) | hh;
+
+  encoder1Angle = ENCODER1;
+  encoder2Angle = ENCODER2;
+
 }
 
 
@@ -232,6 +299,9 @@ void I2C_Message_Handler(byte aa, byte bb, byte cc, byte dd, byte ee, byte ff, b
       }else if (messageRecFrom == 4)
       {
         TrackDescription = "Right Rear(D)";
+      }else if (messageRecFrom == 11)
+      {
+        
       }
       
       Serial.print("Response received from ");
@@ -281,6 +351,38 @@ void I2C_Message_Handler(byte aa, byte bb, byte cc, byte dd, byte ee, byte ff, b
       Serial.println("");
       Serial.println("");
       return;
+}
+
+// newSpeed must be formatted as 8 character string example AV-00000
+void changeAcceleration(String newAccel, int track)
+{
+  //Serial.println(newSpeed);
+    char msg[8] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+    msg[0] = newAccel[0];
+    msg[1] = newAccel[1];
+    msg[2] = newAccel[2];
+    msg[3] = newAccel[3];
+    msg[4] = newAccel[4];
+    msg[5] = newAccel[5];
+    msg[6] = newAccel[6];
+    msg[7] = newAccel[7];
+
+    char Acceleration[5] = { ' ', ' ', ' ', ' ', ' ' };
+    Acceleration[0] = msg[3];
+    Acceleration[1] = msg[4];
+    Acceleration[2] = msg[5];
+    Acceleration[3] = msg[6];
+    Acceleration[4] = msg[7];
+
+    String Acc = Acceleration;
+    int iAcel = Acc.toInt();
+
+    Serial.print("Sending ");
+    Serial.print(newAccel.substring(0,3));
+    Serial.println(iAcel);
+    Wire.beginTransmission(track);  // in define like TrackA                                              
+    Wire.write(msg);                                              
+    Wire.endTransmission(true);
 }
 
 // newSpeed must be formatted as 8 character string example AV-00000
@@ -369,7 +471,7 @@ void processCommand(String command)
     command[0] == 'D')              // If it is a speed command to a specific track
     {
         int trackId = getIDFromChar(command[0]);
-        if(trackId != 0 && (command[1] == 'V' || command[1] == 'O'))
+        if(trackId != 0 && (command[1] == 'V' || command[1] == 'O' || command[1] == 'A'))
         {
           if(command[1] == 'O')
           {
@@ -380,6 +482,9 @@ void processCommand(String command)
           }else if(command[1] == 'V')
           {
             changeSpeed(command, trackId);
+          }else if(command[1] == 'A')
+          {
+            changeAcceleration(command, trackId);
           }
            
            
@@ -407,7 +512,6 @@ void processCommand(String command)
     }
     return;
 }
-
 
 int getIDFromChar(char letter)
 {

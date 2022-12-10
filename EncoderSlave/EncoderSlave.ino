@@ -107,7 +107,7 @@ void DataSend()
    }
    
     int rrr = (int)tt;
-    byte myArray[2];
+    byte myArray[8];
     myArray[0] = (rrr >> 8) & 0xFF;
     myArray[1] = rrr & 0xFF;
     

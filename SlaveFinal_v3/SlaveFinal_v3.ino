@@ -3,8 +3,8 @@
 
 // Used to hold data that comes from the serial port
 String readString; 
-String LastCommand = "";
-String LastCommandValue = "";
+
+long TrackPosition = 0;
 // holds serial port incoming messages
 //String inputString = "";
 
@@ -13,7 +13,11 @@ String LastCommandValue = "";
 
 #define MAX_SPEED 5000
 #define motor_id 3
+#define Status1 7  // Is in motion
+#define Status2 8  // unassigned status signal
+
 int MTRspeed = 300;
+int Aceleration = 100;
 
 byte b1 = (byte)0;
 byte b2 = (byte)0;
@@ -24,43 +28,86 @@ byte b6 = (byte)0;
 byte b7 = (byte)0;
 byte b8 = (byte)0;
 
+unsigned long startMillis;  //some global variables available anywhere in the program
+unsigned long currentMillis;
+const unsigned long period = 1000;  //the value is a number of milliseconds
+unsigned long ticks = 0;
+const long distanceInterval = 50;
+
 int directionVar = 0; // 0 forward  1 rev
 AccelStepper stepper;
 
 void WireAction();
 void SendData();
 void setDirection();
-
+void setcurrentposition(long newPosition);
+void CalculatePosition();
 // Flush the serial buffer
 //void serial_flush(void);
 
 // read input commands
 //void readstring();
 
-/*
-digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);                       // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000);  
 
 
-*/
+
+
+
+
+
+
+
+
+
 
 void setup() {
+  startMillis = millis();  //initial start time
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(Status2, OUTPUT);
+  pinMode(Status1, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(Status2, LOW);
+  digitalWrite(Status1, LOW);
  // Serial.begin(9600);
  stepper.setMaxSpeed(10000);
  stepper.setSpeed(MTRspeed);
-  LastCommandValue = (String)MTRspeed;
+ stepper.setAcceleration	((float)Aceleration);
+ setcurrentposition(0);
+ stepper.runSpeed();
+ 
  Wire.begin(motor_id);
  Wire.onReceive(WireAction);
  Wire.onRequest(SendData);
 }
 
+
+
+
+
+
+
+
+
+
+
 void loop() {
   stepper.setSpeed(MTRspeed);
   stepper.runSpeed();
+  
+  if (currentMillis - startMillis >= period)  //test whether the period has elapsed
+  {
+    ticks++;
+    CalculatePosition();
+    if(stepper.isRunning())
+    {
+        digitalWrite(Status1, HIGH);
+    }else
+    {
+      digitalWrite(Status1, LOW);
+    }
+    startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED state.
+
+  }
 /*
   readstring();
     inputString.toUpperCase();
@@ -91,9 +138,17 @@ void loop() {
 }
 
 
+
+
+
+
+
+
+
+
 void SendData()
 {
-  long tt = stepper.currentPosition(); 
+  long tt = (TrackPosition / distanceInterval); 
   
   int rrr = (int)tt;
   byte myArray[8];
@@ -111,11 +166,22 @@ void SendData()
   myArray[3] = (byte)motor_id;
   myArray[4] = (byte)transmitSpeed[0];
   myArray[5] = (byte)transmitSpeed[1];
-  myArray[6] = (byte)0;//transmitSpeed[2];
-  myArray[7] = (byte)0;//transmitSpeed[3];
+  myArray[6] = (byte)0;
+  myArray[7] = (byte)0;
   
   Wire.write(myArray, 8);
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 void WireAction(int howmany)
@@ -138,22 +204,31 @@ void WireAction(int howmany)
   }
   i = 0;
   
-  
   String sInstruction = instruction;
   String sInstructionValue = instructionValue;
-  int tempSpeed = sInstructionValue.toInt();
-  LastCommand = sInstruction.substring(0,3);
+  int tempValue = sInstructionValue.toInt();
+  
   if(sInstruction[1] == 'V')
   {
-    MTRspeed = tempSpeed;
-    LastCommandValue = (String)MTRspeed;
-    //return;
+    MTRspeed = tempValue;
+    stepper.setSpeed(MTRspeed);
+  
+    stepper.runSpeed();
+   
   }else if (sInstruction[1] == 'O')  // Command issued is the change direction command
   {
     setDirection();
-    LastCommandValue = sInstructionValue.substring(0,5);
+   
+  }else if (sInstruction[0] == 'S' && sInstruction[1] == 'C') 
+  {
+    long newPosition = (long)tempValue;
+    setcurrentposition(newPosition);
     
-    //return;
+  }else if (sInstruction[1] == 'A')  // Command issued is the change Acceleration command
+  {
+    Aceleration = sInstructionValue.toInt();
+    stepper.setAcceleration((float)Aceleration);
+    
   }
   instruction[0] = ' ';
   instruction[1] = ' ';
@@ -161,16 +236,69 @@ void WireAction(int howmany)
   return;
 }
 
+
+
+
+
+
+
+
+
+
+
+void setcurrentposition(long newPosition)
+{
+  stepper.setCurrentPosition(newPosition);
+}
+
+
+
+
+
+
+void CalculatePosition()
+{
+  if(directionVar == 0)
+  {
+    TrackPosition = TrackPosition + stepper.currentPosition();
+    setcurrentposition(0);
+    
+   
+  }else if(directionVar == 1)
+  {
+    TrackPosition = TrackPosition - stepper.currentPosition();
+    setcurrentposition(0);
+    
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 void setDirection()
 {
   if(directionVar == 0)
   {
+    TrackPosition = TrackPosition + stepper.currentPosition();
+    setcurrentposition(0);
     digitalWrite(LED_BUILTIN, LOW);
     directionVar = 1;
+    
     stepper.setPinsInverted(true,false,false);
     stepper.runSpeed();
   }else if(directionVar == 1)
   {
+    TrackPosition = TrackPosition - stepper.currentPosition();
+    setcurrentposition(0);
     digitalWrite(LED_BUILTIN, HIGH);
     directionVar = 0;
     stepper.setPinsInverted(false,false,false);
